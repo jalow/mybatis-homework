@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.random.mapper.MerchantBizMapper">
+
+    <cache type="org.apache.ibatis.cache.impl.PerpetualCache"
+           size="1024"
+           eviction="LRU"
+           flushInterval="120000"
+           readOnly="false"/>
+
+    <resultMap id="BaseResultMap" type="merchantBiz">
+        <id column="mer_id" property="merId" jdbcType="INTEGER"/>
+        <result column="biz_code" property="bizCode" jdbcType="VARCHAR" typeHandler="com.random.type.MyIntegerListTypeHandler"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap" statementType="PREPARED" >
+        select mer_id, biz_code from mhw_merchant_biz
+    </select>
+
+    <!-- 只能用在自定义类型和map上 -->
+    <select id="findByMerId"  resultMap="BaseResultMap">
+        select mer_id, biz_code from mhw_merchant_biz where mer_id = #{merId}
+    </select>
+
+    <select id="findBizCodeByMerId" resultMap="BaseResultMap">
+         select biz_code from mhw_merchant_biz where mer_id = #{merId}
+    </select>
+
+    <!-- 插入操作 -->
+    <insert id="insertOne" parameterType="merchantBiz">
+        insert into mhw_merchant_biz(mer_id, biz_code) 
+        value(
+        #{merId,jdbcType=INTEGER}, 
+        #{bizCode,jdbcType=VARCHAR, typeHandler=com.random.type.MyIntegerListTypeHandler})
+    </insert>
+    <insert id="insertBizList" parameterType="java.util.List">
+        insert into mhw_merchant_biz (mer_id, biz_code)
+        values
+        <foreach collection="list" item="merchantBiz" index="index"  separator=",">
+            ( #{merchantBiz.merId},#{merchantBiz.bizCode})
+        </foreach>
+    </insert>
+    
+    <!-- 批量操作 -->    
+    <delete id="deleteOne" parameterType="merchantBiz">
+        delete from mhw_merchant_biz where mer_id = #{merId}
+    </delete>
+    <delete id="deleteBizList" parameterType="java.util.List">
+        delete from mhw_merchant_biz where mer_id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item.merId,jdbcType=INTEGER}
+        </foreach>
+    </delete>
+
+    <!-- 更新操作 -->
+    <update id="updateBizList">
+        update mhw_merchant_biz set
+        biz_code =
+        <foreach collection="list" item="biz" index="index" separator=" " open="case mer_id" close="end">
+            when #{biz.merId} then #{biz.bizCode}
+        </foreach>
+        where mer_id in
+        <foreach collection="list" item="merchant" open="(" separator="," close=")">
+            #{merchant.merId,jdbcType=INTEGER}
+        </foreach>
+    </update>
+    <update id="updateOne" parameterType="merchantBiz">
+        update mhw_merchant_biz set biz_code = #{bizCode} where mer_id = #{merId}
+    </update>
+
+</mapper>
